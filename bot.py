@@ -2,12 +2,12 @@ import os
 import sys
 import json
 import time
-import random
+import random, re
 import argparse
 import requests
 from base64 import b64decode, urlsafe_b64decode
 from datetime import datetime
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, unquote
 from colorama import init, Fore, Style
 
 merah = Fore.LIGHTRED_EX
@@ -264,7 +264,11 @@ class Tomartod:
             return _next + random.randint(self.config.data["clow"], self.config.data["chigh"])
 
     def load_data(self, file):
-        datas = [i for i in open(file).read().splitlines() if len(i) > 0]
+        data = open(file).read().strip()
+        if 'tgWebAppData' in data:
+            datas = [unquote(re.search(r'tgWebAppData\=(.*?)&tgWebAppVersion', i).group(1)) if 'tgWebAppData' in i else i for i in data.splitlines()]
+        else:
+            datas = [i for i in open(file).read().splitlines() if len(i) > 0]
         if len(datas) <= 0:
             print(
                 f"{merah}0 account detected from {file}, fill your data in {file} first !{reset}"
@@ -564,6 +568,7 @@ class Tomartod:
                 print(line)
                 self.countdown(self.config.data["interval"])
                 list_countdown.append(result)
+            break
             _end = int(time.time())
             _tot = _end - _start
             _min = min(list_countdown) - _tot
